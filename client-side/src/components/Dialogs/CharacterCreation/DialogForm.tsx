@@ -155,8 +155,7 @@ const CharacterCreationDialog = ({
         (archErrs as Record<ArchtypeKey, string>)[field as ArchtypeKey] ??= msg;
       } else if (slice === "abilityScores") {
         (abilErrs as Record<AbilityKey, string>)[field as AbilityKey] ??= msg;
-      }
-       else if (slice === "coreInfo") {
+      } else if (slice === "coreInfo") {
         (coreErrs as Record<CoreInfoKey, string>)[field as CoreInfoKey] ??= msg;
       }
     }
@@ -172,6 +171,22 @@ const CharacterCreationDialog = ({
 
     return false;
   }, [archtypeForm, abilityScoresForm, coreForm, healthForm]);
+
+  const resetForms = () => {
+    setValue(0);
+    setArchtypeErrors({});
+    setAbilityErrors({});
+    setCoreInfoErrors({});
+    setCoreForm(coreInfoDefaultForm);
+    setHealthForm(healthDefaultForm);
+    setArchtypeForm(archtypeDefaultForm);
+    setAbilityScoresForm(abilityScoreDefaultForm);
+    setProficienciesForm(proficienciesDefaultForm);
+    setIsOpen(false);
+    if (setIsEditing) {
+      setIsEditing(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!validateAllBeforeSubmit()) return;
@@ -208,13 +223,7 @@ const CharacterCreationDialog = ({
       console.error("Error submitting character:", err);
     }
 
-    setIsOpen(false);
-    setValue(0);
-    setCoreForm(coreInfoDefaultForm);
-    setHealthForm(healthDefaultForm);
-    setArchtypeForm(archtypeDefaultForm);
-    setAbilityScoresForm(abilityScoreDefaultForm);
-    setProficienciesForm(proficienciesDefaultForm);
+    resetForms();
   };
 
   const handleEdit = async () => {
@@ -225,11 +234,6 @@ const CharacterCreationDialog = ({
           input: { ...abilityScoresForm },
         },
       });
-
-      console.log(
-        "Ability Scores Submitted:",
-        response.data.createAbilityScores
-      );
     } catch (err) {
       console.error("Error submitting ability scores:", err);
     }
@@ -247,7 +251,6 @@ const CharacterCreationDialog = ({
       const response = await updateCharacterMutation({
         variables: { id: characterInfo?.id, input: { ...character } },
       });
-      console.log("Character Submitted:", response.data.updateCharacter);
     } catch (err) {
       console.error("Error submitting character:", err);
     }
@@ -263,11 +266,7 @@ const CharacterCreationDialog = ({
     goNext: () => setValue(value + 1),
     goBack: () => setValue(value - 1),
     closeButton: () => {
-      setIsOpen(false);
-      if (setIsEditing) {
-        setIsEditing(false);
-      }
-      setValue(0);
+      resetForms();
     },
   };
 
@@ -331,6 +330,7 @@ const CharacterCreationDialog = ({
         setErrors={setCoreInfoErrors}
         isEditing={isEditingMode}
         hasErrors={hasAnyErrors}
+        handleEdit={handleEdit}
       />
       <ArchtypeDialogPage
         value={value}
@@ -341,6 +341,8 @@ const CharacterCreationDialog = ({
         errors={archtypeErrors}
         setErrors={setArchtypeErrors}
         isEditing={isEditingMode}
+        hasErrors={hasAnyErrors}
+        handleEdit={handleEdit}
       />
       <AbilityScoresDialogPage
         value={value}
@@ -350,6 +352,9 @@ const CharacterCreationDialog = ({
         setAbilityScoresForm={setAbilityScoresForm}
         errors={abilityErrors}
         setErrors={setAbilityErrors}
+        isEditing={isEditingMode}
+        hasErrors={hasAnyErrors}
+        handleEdit={handleEdit}
       />
       <ProficienciesDialogPage
         value={value}
@@ -357,6 +362,9 @@ const CharacterCreationDialog = ({
         handlePageNavigation={handlePageNavigation}
         proficienciesForm={proficienciesForm}
         setProficienciesForm={setProficienciesForm}
+        isEditing={isEditingMode}
+        hasErrors={hasAnyErrors}
+        handleEdit={handleEdit}
       />
       <FinalizeDialogPage
         value={value}

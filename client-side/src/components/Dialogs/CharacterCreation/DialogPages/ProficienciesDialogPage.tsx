@@ -14,7 +14,12 @@ import {
   proficienciesDefaultForm,
 } from "@/utils/defaultForms";
 import { InputEventType, PageNavigation } from "@/utils/types";
-import { SAVING_THROWS, SavingThrowsProficiencies, SkillProficiencies, SKILLS } from "@/utils/helpers";
+import {
+  SAVING_THROWS,
+  SavingThrowsProficiencies,
+  SkillProficiencies,
+  SKILLS,
+} from "@/utils/helpers";
 
 type ProficienciesType = {
   value: number;
@@ -24,6 +29,9 @@ type ProficienciesType = {
   setProficienciesForm: React.Dispatch<
     React.SetStateAction<typeof proficienciesDefaultForm>
   >;
+  isEditing?: boolean;
+  hasErrors: boolean;
+  handleEdit?: () => void;
 };
 
 const ProficienciesDialogPage = ({
@@ -32,9 +40,14 @@ const ProficienciesDialogPage = ({
   handlePageNavigation,
   proficienciesForm,
   setProficienciesForm,
+  isEditing,
+  hasErrors,
+  handleEdit,
 }: ProficienciesType) => {
-  
-  const handleToggleProficiencies = (skill: SkillProficiencies, checked: boolean) => {
+  const handleToggleProficiencies = (
+    skill: SkillProficiencies,
+    checked: boolean
+  ) => {
     setProficienciesForm((prev) => {
       const set = new Set(prev.proficiencies);
       checked ? set.add(skill) : set.delete(skill);
@@ -42,7 +55,10 @@ const ProficienciesDialogPage = ({
     });
   };
 
-  const handleToggleSavingThrows = (skill: SavingThrowsProficiencies, checked: boolean) => {
+  const handleToggleSavingThrows = (
+    skill: SavingThrowsProficiencies,
+    checked: boolean
+  ) => {
     setProficienciesForm((prev) => {
       const set = new Set(prev.savingThrows);
       checked ? set.add(skill) : set.delete(skill);
@@ -52,7 +68,7 @@ const ProficienciesDialogPage = ({
 
   return (
     <CustomTabPanel value={value} index={tabNumber}>
-      <Stack>
+      <Stack mb={9}>
         <FormControl sx={{ width: "100%" }}>
           <Typography sx={{ mb: 1, color: "#000" }}>
             Skill Proficiencies
@@ -115,26 +131,55 @@ const ProficienciesDialogPage = ({
           mt={5}
           columnGap={10}
           position="relative"
-          bottom={-26}
+          bottom={-49}
         >
-          <Button variant="contained" onClick={() => handlePageNavigation.closeButton()}>
-            Close
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => handlePageNavigation.closeButton()}
+            sx={{ bgcolor: "#fcd2d2" }}
+          >
+            Cancel
           </Button>
-          <Stack direction="row" columnGap={2}>
+          {isEditing ? (
             <Button
               variant="contained"
+              disabled={hasErrors}
+              onClick={handleEdit}
+              sx={{ ml: 9 }}
+            >
+              Update
+            </Button>
+          ) : null}
+          <Stack direction="row" columnGap={2}>
+            <Button
+              variant="outlined"
+              color="secondary"
               onClick={() => handlePageNavigation.goBack()}
             >
               Back
             </Button>
             <Button
-              variant="contained"
+              variant="outlined"
+              color="secondary"
               onClick={() => handlePageNavigation.goNext()}
             >
               Next
             </Button>
           </Stack>
         </Stack>
+        <Typography
+          variant="body2"
+          color="error"
+          textAlign="center"
+          mt={-1}
+          position="relative"
+          bottom={7}
+        >
+          {hasErrors && isEditing
+            ? "You have input errors. Fix them first."
+            : ""}
+        </Typography>
       </Stack>
     </CustomTabPanel>
   );

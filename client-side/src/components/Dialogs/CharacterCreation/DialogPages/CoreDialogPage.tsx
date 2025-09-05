@@ -33,6 +33,7 @@ type CharacterCreationPageProps = {
   setErrors: React.Dispatch<React.SetStateAction<CoreInfoErrors>>;
   isEditing?: boolean;
   hasErrors: boolean;
+  handleEdit?: () => void;
 };
 
 const labels = {
@@ -56,6 +57,7 @@ const CoreDialogPage = ({
   setErrors,
   isEditing,
   hasErrors,
+  handleEdit,
 }: CharacterCreationPageProps) => {
   const [name, setName] = useState(coreForm.name);
   const [health, setHealth] = useState(healthForm.maxHealth);
@@ -75,7 +77,7 @@ const CoreDialogPage = ({
     (key: CoreInfoKey, raw: unknown) => {
       const res = coreInfoZodSchema.shape[key].safeParse(raw);
       if (res.success) {
-        clearError(key); // remove key entirely
+        clearError(key);
       } else {
         setErrors((prev) => ({ ...prev, [key]: res.error.issues[0]?.message }));
       }
@@ -164,7 +166,6 @@ const CoreDialogPage = ({
             <TextField
               variant="standard"
               value={health}
-              type="number"
               onChange={handleHealthInput}
               onBlur={(e) => {
                 setHealthForm({
@@ -232,14 +233,26 @@ const CoreDialogPage = ({
         bottom={-12}
       >
         <Button
-          variant="contained"
+          variant="outlined"
+          color="error"
           onClick={() => handlePageNavigation.closeButton()}
+          sx={{ bgcolor: "#fcd2d2" }}
         >
-          Close
+          Cancel
         </Button>
-        {isEditing ? <Button variant="contained">Update</Button> : null}
+        {isEditing ? (
+          <Button
+            variant="contained"
+            disabled={hasErrors}
+            onClick={handleEdit}
+            sx={{ mr: 2 }}
+          >
+            Update
+          </Button>
+        ) : null}
         <Button
-          variant="contained"
+          variant="outlined"
+          color="secondary"
           onClick={() => handlePageNavigation.goNext()}
         >
           Next

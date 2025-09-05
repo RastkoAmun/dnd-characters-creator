@@ -19,6 +19,9 @@ type AbilityScoresDialogPageType = {
   >;
   errors: AbilityErrors;
   setErrors: React.Dispatch<React.SetStateAction<AbilityErrors>>;
+  isEditing?: boolean;
+  hasErrors: boolean;
+  handleEdit?: () => void;
 };
 
 const AbilityScoresDialogPage = ({
@@ -29,6 +32,9 @@ const AbilityScoresDialogPage = ({
   setAbilityScoresForm,
   errors,
   setErrors,
+  isEditing,
+  hasErrors,
+  handleEdit,
 }: AbilityScoresDialogPageType) => {
   const [strength, setStrength] = useState(abilityScoresForm.strength);
   const [dexterity, setDexterity] = useState(abilityScoresForm.dexterity);
@@ -40,8 +46,6 @@ const AbilityScoresDialogPage = ({
   );
   const [wisdom, setWisdom] = useState(abilityScoresForm.wisdom);
   const [charisma, setCharisma] = useState(abilityScoresForm.charisma);
-
-  // const [errors, setErrors] = useState<AbilityErrors>({});
 
   const getters = {
     strength: strength,
@@ -61,7 +65,10 @@ const AbilityScoresDialogPage = ({
     charisma: setCharisma,
   };
 
-  const handleAbilityInput = (ability: keyof typeof setters, value: number | string) => {
+  const handleAbilityInput = (
+    ability: keyof typeof setters,
+    value: number | string
+  ) => {
     const setter = setters[ability];
     setter(value as number);
   };
@@ -84,14 +91,16 @@ const AbilityScoresDialogPage = ({
 
   return (
     <CustomTabPanel value={value} index={tabNumber}>
-      <Stack textAlign="center" height="90%">
-        <Typography variant="h5" mt={1}>Choose Ability Scores</Typography>
+      <Stack textAlign="center" height="90%" mb={-1.5}>
+        <Typography variant="h5" mt={1}>
+          Choose Ability Scores
+        </Typography>
         <Typography fontSize={13}>(set to 10 by default)</Typography>
         <Grid container spacing={3} mt={3}>
           {Object.keys(getters).map((k) => {
             const key = k as AbilityKey;
             return (
-              <Grid item key={key} xs={4} justifyItems='center'>
+              <Grid item key={key} xs={4} justifyItems="center">
                 <Typography textTransform="capitalize">{key}</Typography>
                 <TextField
                   variant="standard"
@@ -127,27 +136,52 @@ const AbilityScoresDialogPage = ({
         justifyContent="space-between"
         mt={5}
         columnGap={10}
-        position="relative"
-        bottom={41}
       >
         <Button
-          variant="contained"
+          variant="outlined"
+          color="error"
           onClick={() => handlePageNavigation.closeButton()}
+          sx={{ bgcolor: "#fcd2d2" }}
         >
-          Close
+          Cancel
         </Button>
-        <Stack direction="row" columnGap={2}>
+        {isEditing ? (
           <Button
             variant="contained"
+            disabled={hasErrors}
+            onClick={handleEdit}
+            sx={{ ml: 9 }}
+          >
+            Update
+          </Button>
+        ) : null}
+        <Stack direction="row" columnGap={2}>
+          <Button
+            variant="outlined"
+            color="secondary"
             onClick={() => handlePageNavigation.goBack()}
           >
             Back
           </Button>
-          <Button variant="contained" onClick={() => handlePageNavigation.goNext()}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => handlePageNavigation.goNext()}
+          >
             Next
           </Button>
         </Stack>
       </Stack>
+      <Typography
+        variant="body2"
+        color="error"
+        textAlign="center"
+        mt={-1}
+        position="relative"
+        bottom={56}
+      >
+        {hasErrors && isEditing ? "You have input errors. Fix them first." : ""}
+      </Typography>
     </CustomTabPanel>
   );
 };

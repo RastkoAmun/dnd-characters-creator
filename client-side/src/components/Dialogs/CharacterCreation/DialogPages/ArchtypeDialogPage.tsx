@@ -23,6 +23,8 @@ type ArchtypeType = {
   errors: ArchtypeErrors;
   setErrors: React.Dispatch<React.SetStateAction<ArchtypeErrors>>;
   isEditing?: boolean;
+  hasErrors: boolean;
+  handleEdit?: () => void;
 };
 
 const inputTitles = {
@@ -43,6 +45,8 @@ const ArchtypeDialogPage = ({
   errors,
   setErrors,
   isEditing,
+  hasErrors,
+  handleEdit,
 }: ArchtypeType) => {
   const [chClass, setChClass] = useState(
     isEditing ? archtypeForm.class : archtypeDefaultForm.class
@@ -109,13 +113,14 @@ const ArchtypeDialogPage = ({
 
   return (
     <CustomTabPanel value={value} index={tabNumber}>
-      <Stack mt={2}>
+      <Stack mt={4}>
         <Grid
           container
           width={600}
           spacing={1}
           columnSpacing={5}
           alignSelf="center"
+          mb={2.5}
         >
           {/* Class */}
           <Grid item xs={12} md={6}>
@@ -127,8 +132,6 @@ const ArchtypeDialogPage = ({
               onChange={handleClassInput}
               onBlur={(e) => {
                 setArchtypeForm((prev) => ({ ...prev, class: e.target.value }));
-                // clearError("class");
-                // validateField("class", e.target.value);
               }}
               error={!!errors["class"]}
               helperText={errors["class"] ?? " "}
@@ -146,8 +149,6 @@ const ArchtypeDialogPage = ({
               onChange={handleSubclassInput}
               onBlur={(e) => {
                 setArchtypeForm({ ...archtypeForm, subclass: e.target.value });
-                // clearError("subclass");
-                // validateField("subclass", e.target.value);
               }}
               error={!!errors["subclass"]}
               helperText={errors["subclass"] ?? " "}
@@ -164,8 +165,6 @@ const ArchtypeDialogPage = ({
               onChange={handleRaceInput}
               onBlur={(e) => {
                 setArchtypeForm((prev) => ({ ...prev, race: e.target.value }));
-                // clearError("race");
-                // validateField("race", e.target.value);
               }}
               error={!!errors["race"]}
               helperText={errors["race"] ?? " "}
@@ -232,30 +231,54 @@ const ArchtypeDialogPage = ({
           justifyContent="space-between"
           mt={5}
           columnGap={10}
-          position="relative"
-          bottom={-16}
         >
           <Button
-            variant="contained"
+            variant="outlined"
+            color="error"
             onClick={() => handlePageNavigation.closeButton()}
+            sx={{ bgcolor: "#fcd2d2" }}
           >
-            Close
+            Cancel
           </Button>
-          <Stack direction="row" columnGap={2}>
+          {isEditing ? (
             <Button
               variant="contained"
+              disabled={hasErrors}
+              onClick={handleEdit}
+              sx={{ ml: 9 }}
+            >
+              Update
+            </Button>
+          ) : null}
+          <Stack direction="row" columnGap={2}>
+            <Button
+              variant="outlined"
+              color="secondary"
               onClick={() => handlePageNavigation.goBack()}
             >
               Back
             </Button>
             <Button
-              variant="contained"
+              variant="outlined"
+              color="secondary"
               onClick={() => handlePageNavigation.goNext()}
             >
               Next
             </Button>
           </Stack>
         </Stack>
+        <Typography
+          variant="body2"
+          color="error"
+          textAlign="center"
+          mt={-1}
+          position="relative"
+          bottom={56}
+        >
+          {hasErrors && isEditing
+            ? "You have input errors. Fix them first."
+            : ""}
+        </Typography>
       </Stack>
     </CustomTabPanel>
   );
