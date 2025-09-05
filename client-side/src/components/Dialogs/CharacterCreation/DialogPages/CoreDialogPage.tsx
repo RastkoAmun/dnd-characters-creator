@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -13,6 +13,11 @@ import CustomTabPanel from "@/components/Tabs/CustomTabPanel";
 import { InputEventType, PageNavigation } from "@/utils/types";
 import { coreInfoDefaultForm, healthDefaultForm } from "@/utils/defaultForms";
 import { teal } from "@mui/material/colors";
+import {
+  CoreInfoErrors,
+  CoreInfoKey,
+  coreInfoZodSchema,
+} from "@/utils/validationSchemas";
 
 type HealthDice = "d6" | "d8" | "d10" | "d12" | "" | null;
 
@@ -24,6 +29,10 @@ type CharacterCreationPageProps = {
   healthForm: typeof healthDefaultForm;
   setCoreForm: React.Dispatch<React.SetStateAction<typeof coreInfoDefaultForm>>;
   setHealthForm: React.Dispatch<React.SetStateAction<typeof healthDefaultForm>>;
+  errors: CoreInfoErrors;
+  setErrors: React.Dispatch<React.SetStateAction<CoreInfoErrors>>;
+  isEditing?: boolean;
+  hasErrors: boolean;
 };
 
 const labels = {
@@ -43,18 +52,50 @@ const CoreDialogPage = ({
   healthForm,
   setCoreForm,
   setHealthForm,
+  errors,
+  setErrors,
+  isEditing,
+  hasErrors,
 }: CharacterCreationPageProps) => {
   const [name, setName] = useState(coreForm.name);
   const [health, setHealth] = useState(healthForm.maxHealth);
   const [level, setLevel] = useState(coreForm.level);
   const [healthDice, setHealthDice] = useState(healthForm.healthDice);
 
+  const clearError = useCallback(
+    (key: CoreInfoKey) =>
+      setErrors((prev) => {
+        const { [key]: _removed, ...rest } = prev;
+        return rest;
+      }),
+    [setErrors]
+  );
+
+  const validateField = useCallback(
+    (key: CoreInfoKey, raw: unknown) => {
+      const res = coreInfoZodSchema.shape[key].safeParse(raw);
+      if (res.success) {
+        clearError(key); // remove key entirely
+      } else {
+        setErrors((prev) => ({ ...prev, [key]: res.error.issues[0]?.message }));
+      }
+      return res.success;
+    },
+    [clearError, setErrors]
+  );
+
   // Handlers
   const handleNameInput = (event: InputEventType) => {
-    setName(event.target.value);
+    const input = event.target.value;
+    setName(input);
+    clearError("name");
+    validateField("name", input);
   };
   const handleHealthInput = (event: InputEventType) => {
-    setHealth(Number(event.target.value));
+    const input = event.target.value;
+    setHealth(Number(input));
+    clearError("maxHealth");
+    validateField("maxHealth", input);
   };
   const handleHealthDiceInput = (event: InputEventType) => {
     setHealthDice(event.target.value);
@@ -62,7 +103,7 @@ const CoreDialogPage = ({
 
   const levelButtons = useMemo(
     () => (
-      <Box display="grid" gridTemplateColumns="repeat(10, 1fr)" gap={1}>
+      <Box display="grid" gridTemplateColumns="repeat(10, 1fr)" gap={1} mb={2}>
         {Array.from({ length: 20 }, (_, i) => {
           const n = i + 1;
           const selected = level === n;
@@ -72,8 +113,7 @@ const CoreDialogPage = ({
               size="small"
               variant={selected ? "contained" : "outlined"}
               onClick={() => {
-                setCoreForm({...coreForm, level: n}),
-                setLevel(n)
+                setCoreForm({ ...coreForm, level: n }), setLevel(n);
               }}
               sx={{
                 minWidth: 30,
@@ -101,7 +141,7 @@ const CoreDialogPage = ({
 
   return (
     <CustomTabPanel value={value} index={tabNumber}>
-      <Stack rowGap={3}>
+      <Stack rowGap={2} mb={3}>
         <Stack direction="row" gap={10}>
           <Stack>
             <Typography>{labels.name}</Typography>
@@ -109,7 +149,13 @@ const CoreDialogPage = ({
               variant="standard"
               value={name}
               onChange={handleNameInput}
-              onBlur={(e) => setCoreForm({ ...coreForm, name: e.target.value })}
+              onBlur={(e) => {
+                setCoreForm({ ...coreForm, name: e.target.value });
+                clearError("name");
+                validateField("name", e.target.value);
+              }}
+              error={!!errors["name"]}
+              helperText={errors["name"] ?? " "}
             />
           </Stack>
 
@@ -118,17 +164,24 @@ const CoreDialogPage = ({
             <TextField
               variant="standard"
               value={health}
+              type="number"
               onChange={handleHealthInput}
-              onBlur={(e) =>
+              onBlur={(e) => {
                 setHealthForm({
                   ...healthForm,
                   maxHealth: Number(e.target.value),
                   currentHealth: Number(e.target.value),
                   tempHealth: 0,
-                })
-              }
+                });
+                clearError("maxHealth");
+                validateField("maxHealth", e.target.value);
+              }}
+              error={!!errors["maxHealth"]}
               sx={{ width: 90 }}
             />
+            <Typography fontSize={12} color="error" mt={0.5}>
+              {errors["maxHealth"] ?? ""}
+            </Typography>
           </Stack>
         </Stack>
         <Stack>
@@ -176,11 +229,15 @@ const CoreDialogPage = ({
         mt={5}
         columnGap={10}
         position="relative"
-        bottom={-10}
+        bottom={-12}
       >
-        <Button variant="contained" onClick={() => handlePageNavigation.closeButton()}>
+        <Button
+          variant="contained"
+          onClick={() => handlePageNavigation.closeButton()}
+        >
           Close
         </Button>
+        {isEditing ? <Button variant="contained">Update</Button> : null}
         <Button
           variant="contained"
           onClick={() => handlePageNavigation.goNext()}
@@ -188,6 +245,16 @@ const CoreDialogPage = ({
           Next
         </Button>
       </Stack>
+      <Typography
+        variant="body2"
+        color="error"
+        textAlign="center"
+        mt={1}
+        position="relative"
+        bottom={60}
+      >
+        {hasErrors && isEditing ? "You have input errors. Fix them first." : ""}
+      </Typography>
     </CustomTabPanel>
   );
 };
