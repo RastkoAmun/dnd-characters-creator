@@ -6,7 +6,7 @@ const coreInfoDefaultForm = {
 };
 
 const healthDefaultForm = {
-  maxHealth: 0,
+  maxHealth: 6,
   currentHealth: 0,
   tempHealth: 0,
   healthDice: "d6",
@@ -17,17 +17,17 @@ const archtypeDefaultForm = {
   subclass: "",
   race: "",
   subrace: "",
-  speed: 0,
-  armor: 0
+  speed: 30,
+  armor: 10
 };
 
 const abilityScoreDefaultForm = {
-  strength: 0,
-  dexterity: 0,
-  constitution: 0,
-  intelligence: 0,
-  wisdom: 0,
-  charisma: 0,
+  strength: 10,
+  dexterity: 10,
+  constitution: 10,
+  intelligence: 10,
+  wisdom: 10,
+  charisma: 10,
 };
 
 const proficienciesDefaultForm = {
