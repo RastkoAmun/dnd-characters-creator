@@ -36,7 +36,6 @@ export default function LoginForm() {
       justifyContent="center"
       minHeight="100vh"
       sx={{
-        backgroundImage: `url('/backgrounds/grass-castle-bg.png')`,
         backgroundSize: "1920px 850px",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

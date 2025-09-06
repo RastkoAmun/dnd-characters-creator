@@ -83,7 +83,7 @@ export default function GetStartedForm() {
           onClick={handleGuestUser}
           sx={{ bgcolor: "white" }}
         >
-          Try as Guest
+          Try Demo Account
         </Button>
       </Paper>
     </Box>
