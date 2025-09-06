@@ -46,6 +46,44 @@ const CardGrid = () => {
           Choose Your Character
         </Typography>
         <Grid container rowGap={8} sx={{ mx: "auto" }} justifyContent="center">
+          <Grid item xs={12} sm={6} md={4} justifyItems="center">
+            <Card
+              onClick={() => setCharacterCreationOpen(true)}
+              elevation={5}
+              sx={{
+                width: 300,
+                height: 400,
+                borderRadius: 3,
+                bgcolor: "#cae6ef",
+                transition: "transform 0.2s",
+                "&:hover": {
+                  transform: "scale(1.03)",
+                  cursor: "pointer",
+                },
+              }}
+            >
+              <CardActionArea sx={{ height: "100%" }}>
+                <CardContent
+                  sx={{
+                    display: "flex",
+                    flexDirection: 'column',
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <AddIcon
+                    sx={{
+                      fontSize: 180,
+                      textAlign: "center",
+                      color: "#444444",
+                    }}
+                  />
+                  <Typography>(Click here to add a new character)</Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
           {data.characters.map((character: Character, index: number) => (
             <Grid item xs={12} sm={6} md={4} key={index} justifyItems="center">
               <Card
@@ -110,42 +148,6 @@ const CardGrid = () => {
               </Card>
             </Grid>
           ))}
-          <Grid item xs={12} sm={6} md={4} justifyItems="center">
-            <Card
-              onClick={() => setCharacterCreationOpen(true)}
-              elevation={5}
-              sx={{
-                width: 300,
-                height: 400,
-                borderRadius: 3,
-                bgcolor: "#cae6ef",
-                transition: "transform 0.2s",
-                "&:hover": {
-                  transform: "scale(1.03)",
-                  cursor: "pointer",
-                },
-              }}
-            >
-              <CardActionArea sx={{ height: "100%" }}>
-                <CardContent
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <AddIcon
-                    sx={{
-                      fontSize: 200,
-                      textAlign: "center",
-                      color: "#444444",
-                    }}
-                  />
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </Grid>
         </Grid>
         <CharacterCreationDialog
           isOpen={characterCreationOpen}

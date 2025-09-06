@@ -1,9 +1,4 @@
-import React, {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useState,
-} from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Box, Dialog, Tabs, Tab } from "@mui/material";
 import CoreDialogPage from "./DialogPages/CoreDialogPage";
 import {
@@ -29,6 +24,15 @@ import { AbilityScoresQueryType, CharacterType } from "@/utils/types";
 import { updateCharacter } from "@/state/remote/mutations/updateCharacter";
 import { updateAbilityScores } from "@/state/remote/mutations/updateAbilityScores";
 import { getAllCharactersQuery } from "@/state/remote/queries/getAllCharacters";
+import {
+  AbilityErrors,
+  AbilityKey,
+  ArchtypeErrors,
+  ArchtypeKey,
+  characterCreateZodSchema,
+  CoreInfoErrors,
+  CoreInfoKey,
+} from "@/utils/validationSchemas";
 
 const tabLabels = {
   main: {
@@ -65,6 +69,15 @@ const CharacterCreationDialog = ({
   const [proficienciesForm, setProficienciesForm] = useState(
     proficienciesDefaultForm
   );
+
+  const [abilityErrors, setAbilityErrors] = useState<AbilityErrors>({});
+  const [archtypeErrors, setArchtypeErrors] = useState<ArchtypeErrors>({});
+  const [coreInfoErrors, setCoreInfoErrors] = useState<CoreInfoErrors>({});
+
+  const hasAnyErrors =
+    Object.values(abilityErrors).some(Boolean) ||
+    Object.values(archtypeErrors).some(Boolean) ||
+    Object.values(coreInfoErrors).some(Boolean);
 
   useEffect(() => {
     if (isEditingMode && characterInfo && abilityScores) {
@@ -109,7 +122,75 @@ const CharacterCreationDialog = ({
   const [updateAbilityScoresMutation] = useMutation(updateAbilityScores);
   const [updateCharacterMutation] = useMutation(updateCharacter);
 
+  const has = (o: Record<string, unknown>) => Object.keys(o).length > 0;
+
+  const validateAllBeforeSubmit = React.useCallback(() => {
+    const res = characterCreateZodSchema.safeParse({
+      archtype: archtypeForm,
+      abilityScores: abilityScoresForm,
+      coreInfo: {
+        name: coreForm.name,
+        maxHealth: healthForm.maxHealth,
+      },
+    });
+
+    setArchtypeErrors({});
+    setAbilityErrors({});
+    setCoreInfoErrors({});
+
+    if (res.success) return true;
+
+    const archErrs: ArchtypeErrors = {};
+    const abilErrs: AbilityErrors = {};
+    const coreErrs: CoreInfoErrors = {};
+
+    for (const issue of res.error.issues) {
+      const [slice, field] = issue.path as [
+        "archtype" | "abilityScores" | "coreInfo",
+        string
+      ];
+      const msg = issue.message;
+
+      if (slice === "archtype") {
+        (archErrs as Record<ArchtypeKey, string>)[field as ArchtypeKey] ??= msg;
+      } else if (slice === "abilityScores") {
+        (abilErrs as Record<AbilityKey, string>)[field as AbilityKey] ??= msg;
+      } else if (slice === "coreInfo") {
+        (coreErrs as Record<CoreInfoKey, string>)[field as CoreInfoKey] ??= msg;
+      }
+    }
+
+    setArchtypeErrors(archErrs);
+    setAbilityErrors(abilErrs);
+    setCoreInfoErrors(coreErrs);
+
+    if (has(coreErrs)) setValue(CharacterCreationTabNumbers.CORE);
+    else if (has(archErrs)) setValue(CharacterCreationTabNumbers.ARCHTYPE);
+    else if (has(abilErrs))
+      setValue(CharacterCreationTabNumbers.ABILITY_SCORES);
+
+    return false;
+  }, [archtypeForm, abilityScoresForm, coreForm, healthForm]);
+
+  const resetForms = () => {
+    setValue(0);
+    setArchtypeErrors({});
+    setAbilityErrors({});
+    setCoreInfoErrors({});
+    setCoreForm(coreInfoDefaultForm);
+    setHealthForm(healthDefaultForm);
+    setArchtypeForm(archtypeDefaultForm);
+    setAbilityScoresForm(abilityScoreDefaultForm);
+    setProficienciesForm(proficienciesDefaultForm);
+    setIsOpen(false);
+    if (setIsEditing) {
+      setIsEditing(false);
+    }
+  };
+
   const handleSubmit = async () => {
+    if (!validateAllBeforeSubmit()) return;
+
     let abilityScoresID: number = 0;
 
     try {
@@ -142,13 +223,7 @@ const CharacterCreationDialog = ({
       console.error("Error submitting character:", err);
     }
 
-    setIsOpen(false);
-    setValue(0);
-    setCoreForm(coreInfoDefaultForm);
-    setHealthForm(healthDefaultForm);
-    setArchtypeForm(archtypeDefaultForm);
-    setAbilityScoresForm(abilityScoreDefaultForm);
-    setProficienciesForm(proficienciesDefaultForm);
+    resetForms();
   };
 
   const handleEdit = async () => {
@@ -159,11 +234,6 @@ const CharacterCreationDialog = ({
           input: { ...abilityScoresForm },
         },
       });
-
-      console.log(
-        "Ability Scores Submitted:",
-        response.data.createAbilityScores
-      );
     } catch (err) {
       console.error("Error submitting ability scores:", err);
     }
@@ -181,7 +251,6 @@ const CharacterCreationDialog = ({
       const response = await updateCharacterMutation({
         variables: { id: characterInfo?.id, input: { ...character } },
       });
-      console.log("Character Submitted:", response.data.updateCharacter);
     } catch (err) {
       console.error("Error submitting character:", err);
     }
@@ -197,16 +266,20 @@ const CharacterCreationDialog = ({
     goNext: () => setValue(value + 1),
     goBack: () => setValue(value - 1),
     closeButton: () => {
-      setIsOpen(false);
-      if (setIsEditing) {
-        setIsEditing(false);
-      }
-      setValue(0);
+      resetForms();
     },
   };
 
   return (
-    <Dialog open={isOpen} maxWidth={false}>
+    <Dialog
+      open={isOpen}
+      maxWidth={false}
+      PaperProps={{
+        sx: {
+          height: 470,
+        },
+      }}
+    >
       <Box borderBottom={1}>
         <Tabs
           value={value}
@@ -253,6 +326,11 @@ const CharacterCreationDialog = ({
         healthForm={healthForm}
         setCoreForm={setCoreForm}
         setHealthForm={setHealthForm}
+        errors={coreInfoErrors}
+        setErrors={setCoreInfoErrors}
+        isEditing={isEditingMode}
+        hasErrors={hasAnyErrors}
+        handleEdit={handleEdit}
       />
       <ArchtypeDialogPage
         value={value}
@@ -260,6 +338,11 @@ const CharacterCreationDialog = ({
         handlePageNavigation={handlePageNavigation}
         setArchtypeForm={setArchtypeForm}
         archtypeForm={archtypeForm}
+        errors={archtypeErrors}
+        setErrors={setArchtypeErrors}
+        isEditing={isEditingMode}
+        hasErrors={hasAnyErrors}
+        handleEdit={handleEdit}
       />
       <AbilityScoresDialogPage
         value={value}
@@ -267,6 +350,11 @@ const CharacterCreationDialog = ({
         handlePageNavigation={handlePageNavigation}
         abilityScoresForm={abilityScoresForm}
         setAbilityScoresForm={setAbilityScoresForm}
+        errors={abilityErrors}
+        setErrors={setAbilityErrors}
+        isEditing={isEditingMode}
+        hasErrors={hasAnyErrors}
+        handleEdit={handleEdit}
       />
       <ProficienciesDialogPage
         value={value}
@@ -274,6 +362,9 @@ const CharacterCreationDialog = ({
         handlePageNavigation={handlePageNavigation}
         proficienciesForm={proficienciesForm}
         setProficienciesForm={setProficienciesForm}
+        isEditing={isEditingMode}
+        hasErrors={hasAnyErrors}
+        handleEdit={handleEdit}
       />
       <FinalizeDialogPage
         value={value}
@@ -282,6 +373,7 @@ const CharacterCreationDialog = ({
         handleSubmit={handleSubmit}
         handleEdit={handleEdit}
         isEditing={isEditingMode}
+        hasErrors={hasAnyErrors}
       />
     </Dialog>
   );

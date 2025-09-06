@@ -1,16 +1,37 @@
 "use client";
-import { gql, useMutation } from "@apollo/client";
-import { useEffect, useState } from "react";
+import { useMutation } from "@apollo/client";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createUser } from "@/state/remote/mutations/createUser";
-import { FormEventType } from "@/utils/types";
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
+import { useForm } from "react-hook-form";
+
+type FormValues = {
+  email: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+};
 
 export default function CreateAccountForm() {
-  const [form, setForm] = useState({ email: "", username: "", password: "" });
-  const [registerUser, { error }] = useMutation(createUser);
-
+  const [registerUser, { error: gqlError }] = useMutation(createUser);
   const router = useRouter();
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    trigger,
+    formState: { errors, touchedFields, isSubmitted, isSubmitting, isValid },
+  } = useForm<FormValues>({
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      username: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined" && localStorage.getItem("token")) {
@@ -18,11 +39,26 @@ export default function CreateAccountForm() {
     }
   }, [router]);
 
-  const handleSubmit = async (event: FormEventType) => {
-    event.preventDefault();
-    await registerUser({ variables: { input: form } });
-    console.log("Account Created!");
+  const pw = watch("password");
+
+  useEffect(() => {
+    if (touchedFields.confirmPassword) {
+      trigger("confirmPassword");
+    }
+  }, [pw, touchedFields.confirmPassword, trigger]);
+
+  const showConfirmErr =
+    !!errors.confirmPassword && (touchedFields.confirmPassword || isSubmitted);
+
+  useEffect(() => {
+    trigger("confirmPassword");
+  }, [pw, trigger]);
+
+  const onSubmit = async (data: FormValues) => {
+    const { email, username, password } = data;
+    await registerUser({ variables: { input: { email, username, password } } });
     router.push("/login");
+    console.log("RUNS");
   };
 
   return (
@@ -50,22 +86,35 @@ export default function CreateAccountForm() {
           Sign Up
         </Typography>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <TextField
             label="Email"
             variant="outlined"
             fullWidth
             margin="normal"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            autoComplete="email"
+            error={!!errors.email}
+            helperText={errors.email?.message ?? " "}
+            {...register("email", {
+              required: "Email is required",
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/i,
+                message: "Enter a valid email",
+              },
+            })}
           />
           <TextField
             label="Username"
             variant="outlined"
             fullWidth
             margin="normal"
-            value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            autoComplete="username"
+            error={!!errors.username}
+            helperText={errors.username?.message ?? " "}
+            {...register("username", {
+              required: "Username is required",
+              minLength: { value: 2, message: "Minimum 2 characters" },
+            })}
           />
           <TextField
             label="Password"
@@ -73,15 +122,45 @@ export default function CreateAccountForm() {
             variant="outlined"
             fullWidth
             margin="normal"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            autoComplete="new-password"
+            error={!!errors.password}
+            helperText={errors.password?.message ?? " "}
+            {...register("password", {
+              required: "Password is required",
+              minLength: { value: 8, message: "At least 8 characters" },
+              validate: {
+                hasUpper: (v) =>
+                  /[A-Z]/.test(v) || "Must include an uppercase letter",
+                hasNumber: (v) => /\d/.test(v) || "Must include a number",
+              },
+            })}
+          />
+          <TextField
+            label="Confirm Password"
+            type="password"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            autoComplete="new-password"
+            error={showConfirmErr}
+            helperText={showConfirmErr ? errors.confirmPassword?.message : " "}
+            {...register("confirmPassword", {
+              required: "Please confirm your password",
+              validate: (v) => v === pw || "Passwords must match",
+            })}
           />
 
-          {error && (
-            <Typography color="error" my={1} sx={{ my: 1, textAlign: 'center' }}>
-              {error.graphQLErrors[0]?.message || "Something went wrong"}
-            </Typography>
-          )}
+          <Typography
+            color="error"
+            sx={{
+              my: 1,
+              textAlign: "center",
+              minHeight: 24,
+              visibility: gqlError ? "visible" : "hidden",
+            }}
+          >
+            {gqlError?.graphQLErrors?.[0]?.message || "Something went wrong"}
+          </Typography>
 
           <Button
             type="submit"
@@ -89,8 +168,9 @@ export default function CreateAccountForm() {
             color="primary"
             fullWidth
             sx={{ mt: 2 }}
+            disabled={!isValid || isSubmitting}
           >
-            Sign Up
+            {isSubmitting ? "Creating..." : "Sign Up"}
           </Button>
         </form>
       </Paper>

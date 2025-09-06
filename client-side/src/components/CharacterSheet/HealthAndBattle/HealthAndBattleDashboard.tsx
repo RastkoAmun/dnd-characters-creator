@@ -14,7 +14,6 @@ const HealthAndBattleDashboard = ({
   character,
   initiative,
 }: HealthAndBattleDashboardType) => {
-  console.log(character);
   return (
     <Stack
       width="100%"
