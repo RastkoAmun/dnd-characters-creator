@@ -13,6 +13,11 @@ type FormValues = {
   confirmPassword: string;
 };
 
+const backendErrors = {
+  emailError: "Email already in use.",
+  usernameError: "Username already in use.",
+};
+
 export default function CreateAccountForm() {
   const [registerUser, { error: gqlError }] = useMutation(createUser);
   const router = useRouter();
@@ -24,7 +29,7 @@ export default function CreateAccountForm() {
     trigger,
     formState: { errors, touchedFields, isSubmitted, isSubmitting, isValid },
   } = useForm<FormValues>({
-    mode: "onChange",
+    mode: "all",
     defaultValues: {
       email: "",
       username: "",
@@ -40,25 +45,30 @@ export default function CreateAccountForm() {
   }, [router]);
 
   const pw = watch("password");
+  const confirmPw = watch("confirmPassword");
 
   useEffect(() => {
     if (touchedFields.confirmPassword) {
       trigger("confirmPassword");
     }
-  }, [pw, touchedFields.confirmPassword, trigger]);
+
+    if (confirmPw.length === pw.length && confirmPw.length > 0) {
+      trigger("confirmPassword");
+    }
+
+    if (pw && confirmPw) {
+      trigger("confirmPassword");
+    }
+  }, [pw, confirmPw, touchedFields.confirmPassword, trigger]);
 
   const showConfirmErr =
-    !!errors.confirmPassword && (touchedFields.confirmPassword || isSubmitted);
-
-  useEffect(() => {
-    trigger("confirmPassword");
-  }, [pw, trigger]);
+    !!errors.confirmPassword &&
+    (touchedFields.confirmPassword || confirmPw.length > 0 || isSubmitted);
 
   const onSubmit = async (data: FormValues) => {
     const { email, username, password } = data;
     await registerUser({ variables: { input: { email, username, password } } });
     router.push("/login");
-    console.log("RUNS");
   };
 
   return (
@@ -93,7 +103,10 @@ export default function CreateAccountForm() {
             fullWidth
             margin="normal"
             autoComplete="email"
-            error={!!errors.email}
+            error={
+              !!errors.email ||
+              backendErrors.emailError === gqlError?.graphQLErrors?.[0]?.message
+            }
             helperText={errors.email?.message ?? " "}
             {...register("email", {
               required: "Email is required",
@@ -109,7 +122,11 @@ export default function CreateAccountForm() {
             fullWidth
             margin="normal"
             autoComplete="username"
-            error={!!errors.username}
+            error={
+              !!errors.username ||
+              backendErrors.usernameError ===
+                gqlError?.graphQLErrors?.[0]?.message
+            }
             helperText={errors.username?.message ?? " "}
             {...register("username", {
               required: "Username is required",
