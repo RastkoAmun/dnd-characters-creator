@@ -1,7 +1,6 @@
 "use client";
 import AbilityScoresDashboard from "@/components/CharacterSheet/AbilityScores/AbilityScoresDashboard";
 import { Box, Button, Grid, Stack, Typography } from "@mui/material";
-import Image from "next/image";
 import { useQuery } from "@apollo/client";
 import { getCharacterQuery } from "@/state/remote/queries/getCharacter";
 import getAbilityScores from "@/state/remote/queries/getAbilityScores";
@@ -69,6 +68,7 @@ const CharacterClient = ({ id }: { id: number }) => {
             <SavingThrowsDashboard
               abilityScores={abilitiesData.abilityScores}
               savingThrows={characterData.character.savingThrows}
+              level={characterData.character.level}
             />
           </Stack>
         </Grid>
@@ -76,6 +76,7 @@ const CharacterClient = ({ id }: { id: number }) => {
           <SkillProficiencies
             proficiencies={characterData.character.proficiencies}
             abilityScores={abilitiesData.abilityScores}
+            level={characterData.character.level}
           />
         </Grid>
         <Grid item width="100%" height="100%" xs={12} md={12} lg={5.5}>

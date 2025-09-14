@@ -243,7 +243,10 @@ const CharacterCreationDialog = ({
       ...archtypeForm,
       ...proficienciesForm,
       ...healthForm,
-      currentHealth: characterInfo?.currentHealth,
+      currentHealth: 
+        (characterInfo?.currentHealth as number) > healthForm.maxHealth
+          ? healthForm.maxHealth
+          : characterInfo?.currentHealth,
       tempHealth: characterInfo?.tempHealth,
     };
 

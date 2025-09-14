@@ -109,6 +109,7 @@ export const calculateModifier = (value: number): AbilityScoreModifierType => {
         sign: "+",
       };
     case 20:
+    case 21:
       return {
         modifier: 5,
         sign: "+",
@@ -136,6 +137,23 @@ export const calculateModifier = (value: number): AbilityScoreModifierType => {
         modifier: -4,
         sign: "",
       };
+    case 22:
+    case 23:
+      return {
+        modifier: 6,
+        sign: "+"
+      }
+    case 24:
+    case 25:
+      return {
+        modifier: 7,
+        sign: "+"
+      }
+    case 26:
+      return {
+        modifier: 8,
+        sign: "+"
+      }
     default:
       return {
         modifier: 0,
@@ -156,5 +174,7 @@ export const calculateProficiency = (level: number) => {
       return 5;
     case level <= 20:
       return 6;
+    default:
+      return 2;
   }
 };

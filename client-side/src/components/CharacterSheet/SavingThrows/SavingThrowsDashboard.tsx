@@ -1,10 +1,8 @@
-import { Box, Grid, Stack, Typography } from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import React from "react";
 import SavingThrowCard from "./SavingThrowCard";
 
-import { AbilityScores, calculateModifier } from "@/utils/helpers";
-import { useQuery } from "@apollo/client";
-import abilityScores from "@/state/remote/queries/getAbilityScores";
+import { AbilityScores, calculateModifier, calculateProficiency } from "@/utils/helpers";
 import {
   AbilityScoresQueryKeysType,
   AbilityScoresQueryType,
@@ -13,9 +11,11 @@ import {
 const SavingThrowsDashboard = ({
   abilityScores,
   savingThrows,
+  level
 }: {
   abilityScores: AbilityScoresQueryType;
   savingThrows: string[];
+  level: number
 }) => {
   const savingThrowsSet = new Set(savingThrows);
 
@@ -58,7 +58,7 @@ const SavingThrowsDashboard = ({
                 sign +
                 (modifier +
                   (savingThrowsSet.has(abilityScore.toLocaleLowerCase())
-                    ? 2
+                    ? calculateProficiency(level)
                     : 0))
               }
               proficient={savingThrowsSet.has(abilityScore.toLocaleLowerCase())}

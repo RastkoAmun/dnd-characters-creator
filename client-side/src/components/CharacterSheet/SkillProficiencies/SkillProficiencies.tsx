@@ -3,7 +3,7 @@ import { Box, Stack, Typography } from "@mui/material";
 import React from "react";
 import FiberManualRecordOutlinedIcon from "@mui/icons-material/FiberManualRecordOutlined";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
-import { calculateModifier } from "@/utils/helpers";
+import { calculateModifier, calculateProficiency } from "@/utils/helpers";
 import { AbilityScoresQueryType } from "@/utils/types";
 
 enum SkillCategoriesType {
@@ -53,7 +53,8 @@ type Ability = (typeof proficiencyMapping)[Skill];
 const calculateSkillModifier = (
   skill: Skill,
   abilityScores: Record<Ability, number>,
-  isProficient: boolean
+  isProficient: boolean,
+  level: number
 ) => {
   let result = 0;
   const { modifier } = calculateModifier(
@@ -61,7 +62,7 @@ const calculateSkillModifier = (
   );
 
   result = result + modifier;
-  if (isProficient) result = result + 2;
+  if (isProficient) result = result + calculateProficiency(level);
 
   if (result >= 0) return "+" + result;
   else return result;
@@ -70,9 +71,11 @@ const calculateSkillModifier = (
 const SkillProficiencies = ({
   proficiencies,
   abilityScores,
+  level
 }: {
   proficiencies: string[];
   abilityScores: AbilityScoresQueryType;
+  level: number;
 }) => {
   const proficiencySet = new Set(proficiencies);
 
@@ -179,7 +182,8 @@ const SkillProficiencies = ({
                           {calculateSkillModifier(
                             skill.toLowerCase() as Skill,
                             abilityScores,
-                            proficiencySet.has(skill.toLowerCase())
+                            proficiencySet.has(skill.toLowerCase()),
+                            level
                           )}
                         </Typography>
                       </Box>

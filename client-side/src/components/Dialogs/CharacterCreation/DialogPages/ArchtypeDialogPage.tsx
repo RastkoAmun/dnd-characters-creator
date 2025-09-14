@@ -135,7 +135,7 @@ const ArchtypeDialogPage = ({
               }}
               error={!!errors["class"]}
               helperText={errors["class"] ?? " "}
-              placeholder="e.g. Druid, Wizard, Bard, Fighter etc."
+              placeholder="e.g. Fighter, Sorcerer, Bard etc."
             />
           </Grid>
 
